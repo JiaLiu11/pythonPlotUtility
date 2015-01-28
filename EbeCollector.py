@@ -936,7 +936,7 @@ class EbeCollector(object):
                         except ValueError as e:
                             print("Can not find particle id in the dictionary!")
                             exit(e)
-                        if UrQMDpid in pid_to_collect:
+                        if databasePid in pid_to_collect:
                             rap = 0.5*math.log((p0 + pz)/(p0 - pz))
                             if rap < rap_range[1] and rap > rap_range[0]:
                                 pT = math.sqrt(px*px + py*py)
