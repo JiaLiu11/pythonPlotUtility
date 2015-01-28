@@ -27,4 +27,5 @@ else:
 # call EbeCollector
 from EbeCollector import EbeCollector
 EbeCollector().collectParticleinfo(from_folder, subfolder_pattern, 
-                                   databaseFilename = database_filename)
+                                   databaseFilename = database_filename,
+                                   rap_range = (-2.5, 2.5))

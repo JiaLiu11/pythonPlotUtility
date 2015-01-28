@@ -1802,9 +1802,10 @@ if __name__ == "__main__":
     #print(test.get_diffvn_2pc_flow('pion_p', 2, 
     #    pT_range = linspace(0.0, 2.0, 21)))
     #print(test.get_intevn_2pc_flow('pion_p', 2, pT_range = (0.3, 3.0)))
-    #print(test.get_particle_spectra('pion_p', pT_range=linspace(0.1, 2.5, 20), rap_type = 'pseudorapidity'))
+    #print(test.get_particle_spectra('pion_m', pT_range=linspace(0.1, 2.5, 20), rap_type = 'pseudorapidity'))
     #print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-1.0, 1.0, 15)))
-    #print(test.get_particle_yield('pion_p', rap_type = 'rapidity', rap_range=(-0.5, 0.5)))
+    print(test.get_particle_yield('charged', rap_type = 'rapidity', rap_range=(-0.5, 0.5)))
+
     #print(test.get_particle_yield_vs_spatial_variable('pion_p', 'tau', 
     #      linspace(0.6, 10, 50), rap_type = 'rapidity'))
     #print(test.get_avg_diffvn_flow('pion_p', 2, psi_r = 0., 
