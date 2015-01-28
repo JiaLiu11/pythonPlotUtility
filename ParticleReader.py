@@ -253,6 +253,16 @@ class ParticleReader(object):
             self.collect_particle_spectra(aParticle, rap_type='rapidity')
             self.collect_particle_spectra(aParticle, rap_type='pseudorapidity')
 
+    def collect_charged_particle_spectra(self):
+        """
+            collect particle spectra into database for all charged
+            hadrons
+        """
+        charged_particle_list = self.charged_hadron_list
+        for aParticle in charged_particle_list:
+            self.collect_particle_spectra(aParticle, rap_type='rapidity')
+            self.collect_particle_spectra(aParticle, rap_type='pseudorapidity')
+
     def get_particle_yield_vs_rap_hist(self, hydro_id, urqmd_id, pid_string,
                                        rap_type='rapidity'):
         """
@@ -361,6 +371,17 @@ class ParticleReader(object):
         """
         basic_particle_list = ['pion_p', 'kaon_p', 'proton']
         for aParticle in basic_particle_list:
+            self.collect_particle_yield_vs_rap(aParticle, rap_type='rapidity')
+            self.collect_particle_yield_vs_rap(aParticle,
+                                               rap_type='pseudorapidity')
+
+    def collect_charged_particle_yield(self):
+        """
+            collect particle yield into database for all charged 
+            hadrons
+        """
+        charged_particle_list = self.charged_hadron_list
+        for aParticle in charged_particle_list:
             self.collect_particle_yield_vs_rap(aParticle, rap_type='rapidity')
             self.collect_particle_yield_vs_rap(aParticle,
                                                rap_type='pseudorapidity')
@@ -788,8 +809,8 @@ class ParticleReader(object):
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
-        self.collect_basic_particle_spectra()
-        self.collect_basic_particle_yield()
+        self.collect_charged_particle_spectra()
+        self.collect_charged_particle_yield()
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
