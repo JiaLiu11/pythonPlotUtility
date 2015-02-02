@@ -52,6 +52,8 @@ class ParticleReader(object):
             "pion_p", "pion_m", "kaon_p", "kaon_m", "proton", "anti_proton",
             "sigma_p", "sigma_m", "anti_sigma_p", "anti_sigma_m",
             "xi_m", "anti_xi_m"]
+        self.strange_hadron_list = [
+            "lambda", "anti_lambda", "xi_m", "anti_xi_m", "omega" ,"anti_omega"]
 
         # create index for the particle_list table
         if not self.db.doesIndexExist("particleListIndex"):
@@ -263,6 +265,17 @@ class ParticleReader(object):
             self.collect_particle_spectra(aParticle, rap_type='rapidity')
             self.collect_particle_spectra(aParticle, rap_type='pseudorapidity')
 
+    def collect_strange_particle_spectra(self):
+        """
+            collect strange and multi-strange particle spectra into database for all charged
+            hadrons
+        """
+        strange_particle_list = self.strange_hadron_list
+        for aParticle in strange_particle_list:
+            self.collect_particle_spectra(aParticle, rap_type='rapidity')
+            self.collect_particle_spectra(aParticle, rap_type='pseudorapidity')
+
+
     def get_particle_yield_vs_rap_hist(self, hydro_id, urqmd_id, pid_string,
                                        rap_type='rapidity'):
         """
@@ -385,6 +398,18 @@ class ParticleReader(object):
             self.collect_particle_yield_vs_rap(aParticle, rap_type='rapidity')
             self.collect_particle_yield_vs_rap(aParticle,
                                                rap_type='pseudorapidity')
+
+    def collect_strange_particle_yield(self):
+        """
+            collect strange and multi-strange particle yield into database for all charged 
+            hadrons
+        """
+        strange_particle_list = self.strange_hadron_list
+        for aParticle in strange_particle_list:
+            self.collect_particle_yield_vs_rap(aParticle, rap_type='rapidity')
+            self.collect_particle_yield_vs_rap(aParticle,
+                                               rap_type='pseudorapidity')
+
 
     ###########################################################################
     # functions to collect particle emission function
@@ -872,6 +897,10 @@ class ParticleReader(object):
                                            rap_type='pseudorapidity')
         self.collect_charged_particle_spectra()
         self.collect_charged_particle_yield()
+
+        self.collect_strange_particle_spectra()
+        self.collect_strange_particle_yield()
+
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
