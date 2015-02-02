@@ -895,8 +895,10 @@ class ParticleReader(object):
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
-        self.collect_charged_particle_spectra()
-        self.collect_charged_particle_yield()
+        # self.collect_charged_particle_spectra()
+        # self.collect_charged_particle_yield()
+        self.collect_basic_particle_spectra()
+        self.collect_basic_particle_yield()
 
         self.collect_strange_particle_spectra()
         self.collect_strange_particle_yield()
