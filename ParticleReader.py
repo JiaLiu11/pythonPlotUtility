@@ -270,9 +270,9 @@ class ParticleReader(object):
             (y, dN/dy) or (eta, dN/deta) for one given event in the database
         """
         #set rap bin boundaries, debug
-        nrap = 91
-        rap_min = -4.5
-        rap_max = 4.5
+        nrap = 51
+        rap_min = -2.5
+        rap_max = 2.5
         rap_boundaries = linspace(rap_min, rap_max, nrap + 1)
         drap = rap_boundaries[1] - rap_boundaries[0]
         rap_avg = (rap_boundaries[0:-1] + rap_boundaries[1:]) / 2.
