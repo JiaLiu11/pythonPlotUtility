@@ -908,6 +908,10 @@ class ParticleReader(object):
             self.collect_flow_Qn_vectors(aPart)
             self.collect_particle_meanPT(aPart)
 
+        # collect strange and multi-strange flow vectors
+        for aPart in self.strange_hadron_list:
+            self.collect_flow_Qn_vectors(aPart)        
+
     def mergeAnalyzedDatabases(self, toDB, fromDB):
         """
             Merge the analyzed particle database "fromDB" to "toDB"; 

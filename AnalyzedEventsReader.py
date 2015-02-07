@@ -1972,9 +1972,23 @@ if __name__ == "__main__":
     #print(test.get_diffvn_2pc_flow('pion_p', 2, 
     #    pT_range = linspace(0.0, 2.0, 21)))
     #print(test.get_intevn_2pc_flow('pion_p', 2, pT_range = (0.3, 3.0)))
+
     #print(test.get_particle_spectra('pion_p', pT_range=linspace(0.1, 2.5, 20), rap_type = 'pseudorapidity'))
     print test.get_particle_meanPT('pion_p')
     print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-2.5, 2.5, 30)))
+
+    for aParticle in ["pion_p", "kaon_p", "proton", "lambda", "anti_lambda", "xi_m", "anti_xi_m", "omega" ,"anti_omega"]:
+        data_now = test.get_particle_spectra(aParticle, pT_range=linspace(0.1, 2.5, 26), rap_type = 'rapidity')
+        filename_now = "./data/%s_C10_20_hybrid.dat"%aParticle
+        savetxt(filename_now,data_now, fmt="%19.8e",delimiter="\t")
+    for aParticle in ["pion_p", "kaon_p", "proton", "lambda", "anti_lambda", "xi_m", "anti_xi_m", "omega" ,"anti_omega"]:
+        order_now = 2
+        data_now = test.get_diffvn_flow(aParticle, 'scalar_product', order_now, 
+                                        pT_range=linspace(0.0, 2.5, 26))
+        filename_now = "./data/v%d_2_%s_C10_20_hybrid.dat"%(order_now, aParticle)
+        savetxt(filename_now,data_now, fmt="%19.8e",delimiter="\t")    
+    
+    #print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-2.5, 2.5, 30)))
     #print(test.get_particle_yield('pion_p', rap_type = 'rapidity', rap_range=(-0.5, 0.5)))
     #print(test.get_particle_yield_vs_spatial_variable('pion_p', 'tau', 
     #      linspace(0.6, 10, 50), rap_type = 'rapidity'))
