@@ -1271,9 +1271,9 @@ class EbeCollector(object):
     def mergeparticle_parallel_Databases(self, toDB, fromDB):
         """
             Merge the particle database "fromDB" to "toDB"; both are assumed to be
-            databases created from ebe hybrid calculations with osc2u and urqmd running
-            in parallel mode for the same hydro event and different iSS resampled event. 
-            Increase the UrQMDEvent_id while keeping hydroEvent_id unchanged.
+            databases created from parallel run mode of osc2u and urqmd for the same 
+            hydro event but different iSS resampled events. After the merge the 
+            UrQMDEvent_id is changed while hydroEvent_id should stay the same.
         """
         for aTable in fromDB.getAllTableNames():
             # first copy table structure
@@ -1283,7 +1283,7 @@ class EbeCollector(object):
                 toDB.insertIntoTable(aTable, fromDB.selectFromTable(aTable))
             else: # treatment depends on table type
                 if "pid" in aTable: continue # if it's a pid info table, nothing to be done
-                # not a pid info table: shift up hydroEvent_id by the current existing max
+                # not a pid info table: shift up UrQMDEvent_id by the current existing max
                 currentEventIdMax = toDB.selectFromTable(aTable, "max(UrQMDEvent_id)")[0][0]
                 def shiftEID(row):
                     newRow = list(row)
