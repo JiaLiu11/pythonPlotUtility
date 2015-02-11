@@ -788,6 +788,8 @@ class EbeCollector(object):
         for aParticle in particles_to_collect:
             if aParticle == "charged":
                 pid_to_collect += map(lambda x: self.pidDict[x], self.charged_hadron_list)
+            elif aParticle == "allUrqmd":
+                pid_to_collect += map(lambda x: self.pidDict[x], self.UrQMDpidDict.values())
             else:
                 pid_to_collect += [self.pidDict[aParticle]]
         
