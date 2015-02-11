@@ -966,6 +966,7 @@ class ParticleReader(object):
     ########################################################################### 
 
     def generateAnalyzedDatabase(self):
+        
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
@@ -986,7 +987,14 @@ class ParticleReader(object):
         for aPart in self.strange_hadron_list:
             self.collect_flow_Qn_vectors(aPart)        
 
-        self.mergeParticlesShell()
+        self.mergeParticlesShell()           
+        # collect merged partcile spectra and yield
+        for aParticle in self.hadron_merged_name:
+            self.collect_particle_spectra(aParticle, rap_type='rapidity')
+            self.collect_particle_spectra(aParticle, rap_type='pseudorapidity')        
+        # collect merged particle flows
+        for aPart in self.hadron_merged_name:
+            self.collect_flow_Qn_vectors(aPart)   
 
       
     def mergeAnalyzedDatabases(self, toDB, fromDB):
