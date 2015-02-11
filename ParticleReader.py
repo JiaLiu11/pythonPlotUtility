@@ -55,6 +55,15 @@ class ParticleReader(object):
         self.strange_hadron_list = [
             "lambda", "anti_lambda", "xi_m", "anti_xi_m", "omega" ,"anti_omega"]
 
+        # for merged hadron and anti-hadrons
+        self.hadron_unmerged_name = ['pion_p', 'kaon_p', 'proton', 
+                       'lambda', 'xi_m', 'omega']
+        self.ahadron_unmerged_name= ['pion_m', 'kaon_m', 'anti_proton', 
+                       'anti_lambda', 'anti_xi_m', 'anti_omega']
+        self.hadron_merged_name=['pion_total', 'kaon_total', 'proton_total', 
+                             'lambda_total', 'xi_m_total', 'omega_total']
+        self.hadron_merged_pid  =[10011, 10012, 10013, 10014, 10015, 10016]
+
         # create index for the particle_list table
         if not self.db.doesIndexExist("particleListIndex"):
             print("Create index for particle_list table ...")
@@ -826,6 +835,7 @@ class ParticleReader(object):
                             )
         self.analyzed_db._dbCon.commit()  # commit changes
 
+
     def collect_particle_meanPT(self, particle_name):
         """
             collect particle mean pT without pT cut and rapidity=(-0.5, 0.5)
@@ -887,6 +897,70 @@ class ParticleReader(object):
                                             (pid, mean_pT_value, mean_pT_error))
         self.analyzed_db._dbCon.commit()  # commit changes
 
+
+    def mergeParticles(self, particle_p, particle_m, 
+                       particle_new_name, particle_new_pid):
+        """
+            bin hadron and anti-hadron for higher statistics for calculating flow.
+            Query particle_p and its conterpartner from particles database to two lists, 
+            concatenate lists together, and save to analyzed database with particle_new_name
+            and particle_new_pid.
+        """
+        print "Merging %s and %s to %s"%(particle_p, particle_m, particle_new_name)+"."*3
+        # get pid string
+        pid_p = self.pid_lookup[particle_p]        # hadron
+        pidString_p = self.getPidString(particle_p)
+        pid_m = self.pid_lookup[particle_m]        # anti-hadron
+        pidString_m = self.getPidString(particle_m)
+
+        # insert pid if not exist
+        particle_new_pid = int(particle_new_pid) # in case of string input
+        pid_new_exist = self.db.executeSQLquery(
+                            "select pid from pid_lookup where pid=%d"%particle_new_pid).fetchall()   
+        if len(pid_new_exist)==0:
+            self.db.insertIntoTable("pid_lookup", 
+                                    (particle_new_name, int(particle_new_pid)))
+
+        # clean the table if the merged particle exists
+        particle_new_exist = self.db.executeSQLquery(
+                            "select pid from particle_list where pid=%d"%particle_new_pid).fetchall()
+        if len(particle_new_exist)!=0:
+            self.db.executeSQLquery("delete from particle_list where pid=%d"%particle_new_pid)
+
+        # get data
+        particle_p_data = self.db.executeSQLquery(
+                            "select * from particle_list where %s"%pidString_p).fetchall()
+        particle_m_data = self.db.executeSQLquery(
+                            "select * from particle_list where %s"%pidString_m).fetchall()
+        if particle_p_data!=[] and particle_m_data!=[]:
+            # merge particles
+            def shiftPID(row):
+                newRow = list(row)
+                newRow[2] = particle_new_pid # pid, based on particle_list schema
+                return newRow
+            self.db.insertIntoTable("particle_list", list(map(shiftPID, particle_p_data)))
+            self.db.insertIntoTable("particle_list", list(map(shiftPID, particle_m_data)))
+            print "Merging completes!"
+        else:
+            print "No data for %s and %s!"%(particle_p, particle_m)
+
+        # commit changes
+        self.db._dbCon.commit()
+
+
+    def mergeParticlesShell(self):
+        """
+        merge basic and strange particles for better statistics when calculating flow
+        """
+        print "Begin to merge hadron and anti-hadron"+"="*20
+        for i in range(len(self.hadron_unmerged_name)):
+            self.mergeParticles(self.hadron_unmerged_name[i], self.ahadron_unmerged_name[i],
+                           self.hadron_merged_name[i], self.hadron_merged_pid[i])
+        print "Hadron and anti-hadron merged!\n"
+
+
+
+
     ###########################################################################
     # functions to collect two particle correlation
     ########################################################################### 
@@ -912,6 +986,9 @@ class ParticleReader(object):
         for aPart in self.strange_hadron_list:
             self.collect_flow_Qn_vectors(aPart)        
 
+        self.mergeParticlesShell()
+
+      
     def mergeAnalyzedDatabases(self, toDB, fromDB):
         """
             Merge the analyzed particle database "fromDB" to "toDB"; 
