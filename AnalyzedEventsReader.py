@@ -1977,11 +1977,15 @@ if __name__ == "__main__":
     print test.get_particle_meanPT('pion_p')
     print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-2.5, 2.5, 30)))
 
-    for aParticle in ["pion_p", "kaon_p", "proton", "lambda", "anti_lambda", "xi_m", "anti_xi_m", "omega" ,"anti_omega"]:
+
+    for aParticle in ['pion_total', 'kaon_total', 'proton_total', 
+                             'lambda_total', 'xi_m_total', 'omega_total']:
         data_now = test.get_particle_spectra(aParticle, pT_range=linspace(0.1, 2.5, 26), rap_type = 'rapidity')
         filename_now = "./data/%s_C10_20_hybrid.dat"%aParticle
         savetxt(filename_now,data_now, fmt="%19.8e",delimiter="\t")
-    for aParticle in ["pion_p", "kaon_p", "proton", "lambda", "anti_lambda", "xi_m", "anti_xi_m", "omega" ,"anti_omega"]:
+        
+    for aParticle in ['pion_total', 'kaon_total', 'proton_total', 
+                             'lambda_total', 'xi_m_total', 'omega_total']:
         order_now = 2
         data_now = test.get_diffvn_flow(aParticle, 'scalar_product', order_now, 
                                         pT_range=linspace(0.0, 2.5, 26))

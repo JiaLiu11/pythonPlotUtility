@@ -921,29 +921,12 @@ class ParticleReader(object):
             self.db.insertIntoTable("pid_lookup", 
                                     (particle_new_name, int(particle_new_pid)))
 
-        # clean the table if the merged particle exists
-        particle_new_exist = self.db.executeSQLquery(
-                            "select pid from particle_list where pid=%d"%particle_new_pid).fetchall()
-        if len(particle_new_exist)!=0:
-            self.db.executeSQLquery("delete from particle_list where pid=%d"%particle_new_pid)
-
         # get data
-        particle_p_data = self.db.executeSQLquery(
-                            "select * from particle_list where %s"%pidString_p).fetchall()
-        particle_m_data = self.db.executeSQLquery(
-                            "select * from particle_list where %s"%pidString_m).fetchall()
-        if particle_p_data!=[] and particle_m_data!=[]:
-            # merge particles
-            def shiftPID(row):
-                newRow = list(row)
-                newRow[2] = particle_new_pid # pid, based on particle_list schema
-                return newRow
-            self.db.insertIntoTable("particle_list", list(map(shiftPID, particle_p_data)))
-            self.db.insertIntoTable("particle_list", list(map(shiftPID, particle_m_data)))
-            print "Merging completes!"
-        else:
-            print "No data for %s and %s!"%(particle_p, particle_m)
-
+        self.db.executeSQLquery(
+                            "update particle_list set pid=%s where pid=%s"%(particle_new_pid, pid_p))
+        self.db.executeSQLquery(
+                            "update particle_list set pid=%s where pid=%s"%(particle_new_pid, pid_m))
+        print "Merging completes!"
         # commit changes
         self.db._dbCon.commit()
 
@@ -966,7 +949,6 @@ class ParticleReader(object):
     ########################################################################### 
 
     def generateAnalyzedDatabase(self):
-        
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
@@ -985,9 +967,10 @@ class ParticleReader(object):
 
         # collect strange and multi-strange flow vectors
         for aPart in self.strange_hadron_list:
-            self.collect_flow_Qn_vectors(aPart)        
+            self.collect_flow_Qn_vectors(aPart)    
 
-        self.mergeParticlesShell()           
+        # merge particles
+        self.mergeParticlesShell()
         # collect merged partcile spectra and yield
         for aParticle in self.hadron_merged_name:
             self.collect_particle_spectra(aParticle, rap_type='rapidity')
