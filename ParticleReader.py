@@ -801,6 +801,68 @@ class ParticleReader(object):
                             )
         self.analyzed_db._dbCon.commit()  # commit changes
 
+    def collect_particle_meanPT(self, particle_name):
+        """
+            collect particle mean pT without pT cut and rapidity=(-0.5, 0.5)
+            in accordance with ALICE identified particle results
+        """
+         # get pid string
+        pid = self.pid_lookup[particle_name]
+        pidString = self.getPidString(particle_name)
+        analyzed_table_name = 'particle_meanPT'
+        # rapidity 
+        rap_type = "rapidity"
+        rap_lower=-0.5
+        rap_upper= 0.5
+
+        # check whether the data are already collected
+        collected_flag = True
+        if self.analyzed_db.createTableIfNotExists(analyzed_table_name,
+                                                   (('pid', 'integer'),
+                                                    ('mean_pT_value', 'real'),
+                                                    ('mean_pT_error', 'real'))):
+            collected_flag = False
+        else:
+            try_data = array(self.analyzed_db.executeSQLquery(
+                "select * from %s where "
+                "pid = %d" % (analyzed_table_name, pid)).fetchall())
+            if try_data.size == 0: collected_flag = False
+
+        # check whether user wants to update the analyzed data
+        if collected_flag:
+            print("particle spectra of %s has already been collected!"
+                  % particle_name)
+            inputval = raw_input(
+                "Do you want to delete the existing one and collect again?")
+            if inputval.lower() == 'y' or inputval.lower() == 'yes':
+                self.analyzed_db.executeSQLquery("delete from %s "
+                                                 "where pid = %d" % (
+                                                     analyzed_table_name, pid))
+                self.analyzed_db._dbCon.commit()  # commit changes
+                collected_flag = False
+
+        # collect data loop over all the events
+        mean_pT_value = 0.0
+        mean_pT_error = 0.0
+        if not collected_flag:
+            print("collect %s mean pT ..." % particle_name)
+            particle_pT = array(self.db.executeSQLquery(
+                "select pT from particle_list " 
+                "where pid=%d and %g <= %s and %s <= %g"
+                %(pid, rap_lower, rap_type, rap_type, rap_upper)).fetchall())
+            # calculate mean pt
+            if particle_pT.size!=0:
+                totalN = len(particle_pT)
+                mean_pT_value = sum(particle_pT)/totalN
+                mean_pT_error = (sqrt(sum(particle_pT**2.0)/totalN - 
+                                      mean_pT_value**2.0)
+                                /sqrt(self.totNev -1))
+            # insert into table
+            self.analyzed_db.insertIntoTable(analyzed_table_name, 
+                                            (pid, mean_pT_value, mean_pT_error))
+        print pid, mean_pT_value, mean_pT_error
+        self.analyzed_db._dbCon.commit()  # commit changes
+
     ###########################################################################
     # functions to collect two particle correlation
     ########################################################################### 
@@ -814,6 +876,7 @@ class ParticleReader(object):
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
+        self.collect_particle_meanPT('pion_p')
 
     def mergeAnalyzedDatabases(self, toDB, fromDB):
         """
