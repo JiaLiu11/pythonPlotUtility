@@ -860,7 +860,6 @@ class ParticleReader(object):
             # insert into table
             self.analyzed_db.insertIntoTable(analyzed_table_name, 
                                             (pid, mean_pT_value, mean_pT_error))
-        print pid, mean_pT_value, mean_pT_error
         self.analyzed_db._dbCon.commit()  # commit changes
 
     ###########################################################################
@@ -876,7 +875,7 @@ class ParticleReader(object):
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
-        self.collect_particle_meanPT('pion_p')
+            self.collect_particle_meanPT(aPart)
 
     def mergeAnalyzedDatabases(self, toDB, fromDB):
         """

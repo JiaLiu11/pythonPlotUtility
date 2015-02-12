@@ -993,49 +993,58 @@ class AnalyzedDataReader(object):
             range has been constraint on -0.5<=rapidity<=0.5 when 
             collecting collecting pt spectra for identified particles.
         """
-        print("calculating mean pT for %s ... " % particle_name)
+        print("read mean pT for %s ... " % particle_name)
         pid = self.pid_lookup[particle_name]
 
-        # in accordance with ALICE rapidity cut (arXiv:1303.0737)
-        analyzed_table_name = 'particle_pT_spectra' # spectra on rapidity
+        analyzed_table_name = 'particle_meanPT'
+        try:
+            pt_data = self.db.executeSQLquery(
+                "select mean_pT_value, mean_pT_error from %s "
+                "where pid=%d"%(analyzed_table_name, pid)).fetchall()
+        except:
+            print "Cannnot read from table %s"%analyzed_table_name
 
-        meanpT_avg = array([0.0, 0.0])
-        totalN = 0.0
-        #fetch data
-        for ibin in range(1, self.nev_bin):
-            print("processing events %d to %d ..."
-                  % ((ibin - 1) * self.process_nev, ibin * self.process_nev))
-            hydro_ev_bound_low = self.event_bound_hydro[ibin - 1]
-            hydro_ev_bound_high = self.event_bound_hydro[ibin]
-            urqmd_ev_bound_low = self.event_bound_urqmd[ibin - 1]
-            urqmd_ev_bound_high = self.event_bound_urqmd[ibin]
-            if hydro_ev_bound_low == hydro_ev_bound_high:
-                temp_data = array(self.db.executeSQLquery(
-                    "select pT, dN_dydpT from %s where pid = %d and "
-                    "hydro_event_id = %d and (%d <= urqmd_event_id "
-                    "and urqmd_event_id < %d)"
-                    % (analyzed_table_name, pid, hydro_ev_bound_low,
-                       urqmd_ev_bound_low, urqmd_ev_bound_high)).fetchall())
-            else:
-                temp_data = array(self.db.executeSQLquery(
-                    "select pT, dN_dydpT from %s where pid = %d and "
-                    "((hydro_event_id = %d and urqmd_event_id >= %d) "
-                    " or (%d < hydro_event_id and hydro_event_id < %d) "
-                    " or (hydro_event_id = %d and urqmd_event_id < %d))"
-                    % (analyzed_table_name, pid, hydro_ev_bound_low,
-                       urqmd_ev_bound_low, hydro_ev_bound_low,
-                       hydro_ev_bound_high, hydro_ev_bound_high,
-                       urqmd_ev_bound_high)).fetchall())
-            # calculate total pT, total pT^2 and total particle number for one event
-            meanpT_avg[0] += sum(temp_data[::, 0] * temp_data[::, 1])
-            meanpT_avg[1] += sum(temp_data[::, 0]**2 * temp_data[::, 1])
-            totalN += sum(temp_data[::, 1])
+        return array(pt_data)
+        # # in accordance with ALICE rapidity cut (arXiv:1303.0737)
+        # analyzed_table_name = 'particle_pT_spectra' # spectra on rapidity
 
-        # calculate mean pT and <pT>_err
-        meanpT_avg[0] = meanpT_avg[0] / totalN
-        meanpT_avg[1] = (sqrt(meanpT_avg[1] / totalN - meanpT_avg[0] ** 2)
-                        / sqrt(self.tot_nev - 1))
-        return meanpT_avg
+        # meanpT_avg = array([0.0, 0.0])
+        # totalN = 0.0
+        # #fetch data
+        # for ibin in range(1, self.nev_bin):
+        #     print("processing events %d to %d ..."
+        #           % ((ibin - 1) * self.process_nev, ibin * self.process_nev))
+        #     hydro_ev_bound_low = self.event_bound_hydro[ibin - 1]
+        #     hydro_ev_bound_high = self.event_bound_hydro[ibin]
+        #     urqmd_ev_bound_low = self.event_bound_urqmd[ibin - 1]
+        #     urqmd_ev_bound_high = self.event_bound_urqmd[ibin]
+        #     if hydro_ev_bound_low == hydro_ev_bound_high:
+        #         temp_data = array(self.db.executeSQLquery(
+        #             "select pT, dN_dydpT from %s where pid = %d and "
+        #             "hydro_event_id = %d and (%d <= urqmd_event_id "
+        #             "and urqmd_event_id < %d)"
+        #             % (analyzed_table_name, pid, hydro_ev_bound_low,
+        #                urqmd_ev_bound_low, urqmd_ev_bound_high)).fetchall())
+        #     else:
+        #         temp_data = array(self.db.executeSQLquery(
+        #             "select pT, dN_dydpT from %s where pid = %d and "
+        #             "((hydro_event_id = %d and urqmd_event_id >= %d) "
+        #             " or (%d < hydro_event_id and hydro_event_id < %d) "
+        #             " or (hydro_event_id = %d and urqmd_event_id < %d))"
+        #             % (analyzed_table_name, pid, hydro_ev_bound_low,
+        #                urqmd_ev_bound_low, hydro_ev_bound_low,
+        #                hydro_ev_bound_high, hydro_ev_bound_high,
+        #                urqmd_ev_bound_high)).fetchall())
+        #     # calculate total pT, total pT^2 and total particle number for one event
+        #     meanpT_avg[0] += sum(temp_data[::, 0] * temp_data[::, 1])
+        #     meanpT_avg[1] += sum(temp_data[::, 0]**2 * temp_data[::, 1])
+        #     totalN += sum(temp_data[::, 1])
+
+        # # calculate mean pT and <pT>_err
+        # meanpT_avg[0] = meanpT_avg[0] / totalN
+        # meanpT_avg[1] = (sqrt(meanpT_avg[1] / totalN - meanpT_avg[0] ** 2)
+        #                 / sqrt(self.tot_nev - 1))
+        # return meanpT_avg
 
     def get_diffvn_2pc_flow(
             self, particle_name, order, pT_range=linspace(0.0, 3.0, 31)):
@@ -1964,7 +1973,7 @@ if __name__ == "__main__":
     #    pT_range = linspace(0.0, 2.0, 21)))
     #print(test.get_intevn_2pc_flow('pion_p', 2, pT_range = (0.3, 3.0)))
     #print(test.get_particle_spectra('pion_p', pT_range=linspace(0.1, 2.5, 20), rap_type = 'pseudorapidity'))
-    #print test.get_particle_meanPT('pion_p')
+    print test.get_particle_meanPT('pion_p')
     print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-2.5, 2.5, 30)))
     #print(test.get_particle_yield('pion_p', rap_type = 'rapidity', rap_range=(-0.5, 0.5)))
     #print(test.get_particle_yield_vs_spatial_variable('pion_p', 'tau', 
