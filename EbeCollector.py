@@ -938,7 +938,7 @@ class EbeCollector(object):
                                 UrQMDpid = 100 
                             databasePid = self.pidDict[self.UrQMDpidDict[UrQMDpid]]
                         except KeyError as k:
-                            print("Warning: can not find particle name in the dictionary!")
+                            print("Warning: can not find particle name for UrQMDpid=%d in the dictionary!"%UrQMDpid)
                             data_row_count -= 1 # skip this line
                             continue
                         except ValueError as e:
