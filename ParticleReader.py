@@ -519,7 +519,7 @@ class ParticleReader(object):
             Nparticle_sub = min(len(QnA), len(QnB), len(QnC), len(QnD))
         """
         rap_gap1 = (0.25, 0.75, 1.25) # for Qn
-        rap_gap2 = (0.5, 1.0, 1.5) # for QnA, QnB, ...
+        rap_gap2 = (0.75, 1.25, 1.75) # for QnA, QnB, ...
         eps = 1e-15
         norder = 6
         npT = 30
