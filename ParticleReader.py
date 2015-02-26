@@ -217,8 +217,9 @@ class ParticleReader(object):
         if collected_flag:
             print("particle spectra of %s has already been collected!"
                   % particle_name)
-            inputval = raw_input(
-                "Do you want to delete the existing one and collect again?")
+            # inputval = raw_input(
+            #     "Do you want to delete the existing one and collect again?")
+            inputval = 'no' # skip recollecting
             if inputval.lower() == 'y' or inputval.lower() == 'yes':
                 self.analyzed_db.executeSQLquery("delete from %s "
                                                  "where pid = %d" % (
@@ -337,8 +338,9 @@ class ParticleReader(object):
         if collected_flag:
             print("%s dependence of particle yield for %s has already been "
                   "collected!" % (rap_type, particle_name))
-            inputval = raw_input(
-                "Do you want to delete the existing one and collect again?")
+            # inputval = raw_input(
+            #     "Do you want to delete the existing one and collect again?")
+            inputval = 'no' # skip recollecting
             if inputval.lower() == 'y' or inputval.lower() == 'yes':
                 self.analyzed_db.executeSQLquery("delete from %s "
                                                  "where pid = %d" % (
@@ -465,8 +467,9 @@ class ParticleReader(object):
         if collected_flag:
             print("dN/d%s of %s has already been collected!"
                   % (sv_type, particle_name))
-            inputval = raw_input(
-                "Do you want to delete the existing one and collect again?")
+            # inputval = raw_input(
+            #     "Do you want to delete the existing one and collect again?")
+            inputval = 'no' # skip recollecting
             if inputval.lower() == 'y' or inputval.lower() == 'yes':
                 self.analyzed_db.executeSQLquery("delete from %s "
                                                  "where pid = %d" % (
@@ -732,8 +735,9 @@ class ParticleReader(object):
         if collected_flag:
             print("flow Qn vectors for %s has already been collected!"
                   % particle_name)
-            inputval = raw_input(
-                "Do you want to delete the existing one and collect again?")
+            # inputval = raw_input(
+            #     "Do you want to delete the existing one and collect again?")
+            inputval = 'yes' # always recollect for eta gap test
             if inputval.lower() == 'y' or inputval.lower() == 'yes':
                 self.analyzed_db.executeSQLquery("delete from %s "
                                                  "where pid = %d" % (
@@ -766,8 +770,9 @@ class ParticleReader(object):
         if collected_pTdiff_flag:
             print("pT differential flow Qn vectors for %s has already been "
                   "collected!" % particle_name)
-            inputval = raw_input(
-                "Do you want to delete the existing one and collect again?")
+            # inputval = raw_input(
+            #     "Do you want to delete the existing one and collect again?")
+            inputval = 'yes' # always recollect for eta gap test
             if inputval.lower() == 'y' or inputval.lower() == 'yes':
                 self.analyzed_db.executeSQLquery(
                     "delete from %s where pid = %d"
@@ -832,8 +837,9 @@ class ParticleReader(object):
         if collected_flag:
             print("particle spectra of %s has already been collected!"
                   % particle_name)
-            inputval = raw_input(
-                "Do you want to delete the existing one and collect again?")
+            # inputval = raw_input(
+            #     "Do you want to delete the existing one and collect again?")
+            inputval = 'no' # skip recollecting
             if inputval.lower() == 'y' or inputval.lower() == 'yes':
                 self.analyzed_db.executeSQLquery("delete from %s "
                                                  "where pid = %d" % (
