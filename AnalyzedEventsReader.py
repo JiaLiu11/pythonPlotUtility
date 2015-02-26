@@ -1976,14 +1976,14 @@ if __name__ == "__main__":
     # get spectra and differential flow
     for aParticle in ['pion_p', 'kaon_p', 'proton']:
         filename = 'data/v2_SP_%s_C10_20.dat'%aParticle
-        data = test.get_diffvn_flow('pion_p', 'scalar_product', 2,
+        data = test.get_diffvn_flow(aParticle, 'scalar_product', 2,
                                    pT_range=linspace(0.0, 2.0, 21))
-        np.savetxt(filename, data, fmt='%18.6e', delimiter='\t')
+        savetxt(filename, data, fmt='%18.6e', delimiter='\t')
 
         filename = 'data/dNdydpt_%s_C10_20.dat'%aParticle
-        data = test.get_particle_spectra('pion_p', pT_range=linspace(0.1, 2.5, 25), 
+        data = test.get_particle_spectra(aParticle, pT_range=linspace(0.1, 2.5, 25), 
                                           rap_type = 'rapidity')
-        np.savetxt(filename, data, fmt='%18.6e', delimiter='\t')
+        savetxt(filename, data, fmt='%18.6e', delimiter='\t')
 
     # print test.get_particle_meanPT('pion_p')
     # print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-2.5, 2.5, 30)))

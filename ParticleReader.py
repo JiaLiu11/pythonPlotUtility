@@ -518,7 +518,8 @@ class ParticleReader(object):
             QnD is taken particles having 1.5 < rap <= 2.5
             Nparticle_sub = min(len(QnA), len(QnB), len(QnC), len(QnD))
         """
-        rap_gap = (0.25, 0.75, 1.25)
+        rap_gap1 = (0.25, 0.75, 1.25) # for Qn
+        rap_gap2 = (0.5, 1.0, 1.5) # for QnA, QnB, ...
         eps = 1e-15
         norder = 6
         npT = 30
@@ -564,23 +565,23 @@ class ParticleReader(object):
         for ipart in range(len(pT)):
             pTpos = int((pT[ipart] - pT_boundaries[0]) / dpT)
             # Qn is taken particles havging -0.5 <= rap <= 0.5
-            if rap[ipart] <= rap_gap[0] and rap[ipart] >= - rap_gap[0]:
+            if rap[ipart] <= rap_gap1[0] and rap[ipart] >= - rap_gap1[0]:
                 idx.append(ipart)
                 if pTpos < npT: idx_pT[pTpos].append(ipart)
             # QnA is taken particles having -1.5 <= rap < -0.5
-            elif rap[ipart] < - rap_gap[0] and rap[ipart] >= - rap_gap[1]:
+            elif rap[ipart] < - rap_gap2[0] and rap[ipart] >= - rap_gap2[1]:
                 idxA.append(ipart)
                 if pTpos < npT: idxA_pT[pTpos].append(ipart)
             # QnB is taken particles having 0.5 < rap <= 1.5
-            elif rap[ipart] <= rap_gap[1] and rap[ipart] > rap_gap[0]:
+            elif rap[ipart] <= rap_gap2[1] and rap[ipart] > rap_gap2[0]:
                 idxB.append(ipart)
                 if pTpos < npT: idxB_pT[pTpos].append(ipart)
             # QnC is taken particles having -2.5 <= rap < -1.5
-            elif rap[ipart] < - rap_gap[1] and rap[ipart] >= - rap_gap[2]:
+            elif rap[ipart] < - rap_gap2[1] and rap[ipart] >= - rap_gap2[2]:
                 idxC.append(ipart)
                 if pTpos < npT: idxC_pT[pTpos].append(ipart)
             # QnD is taken particles having 1.5 < rap <= 2.5
-            elif rap[ipart] <= rap_gap[2] and rap[ipart] > rap_gap[1]:
+            elif rap[ipart] <= rap_gap2[2] and rap[ipart] > rap_gap2[1]:
                 idxD.append(ipart)
                 if pTpos < npT: idxD_pT[pTpos].append(ipart)
 
