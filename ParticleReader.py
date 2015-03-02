@@ -53,6 +53,27 @@ class ParticleReader(object):
             "sigma_p", "sigma_m", "anti_sigma_p", "anti_sigma_m",
             "xi_m", "anti_xi_m"]
 
+        self.mergedHaron_name_dict = {
+            ('pion_p', 'pion_m')         :       'pion_total',
+            ('kaon_p', 'kaon_m')         :       'kaon_total',
+            ('proton', 'anti_proton')    :       'proton_total',
+            ('lambda', 'anti_lambda')    :       'lambda_total',
+            ('xi_m', 'anti_xi_m')        :       'xi_m_total',
+            ('omega', 'anti_omega')      :       'omega_total',
+        } 
+
+        self.mergedHaron_pid_dict = {
+            'pion_total'      :       10010,
+            'kaon_total'      :       10011,
+            'proton_total'    :       10012,
+            'lambda_total'    :       10014,
+            'xi_m_total'      :       10013,
+            'omega_total'     :       10015,
+        }
+
+        # update pid table
+        self.pid_lookup.update(self.mergedHaron_pid_dict)  
+
         # create index for the particle_list table
         if not self.db.doesIndexExist("particleListIndex"):
             print("Create index for particle_list table ...")
@@ -93,6 +114,11 @@ class ParticleReader(object):
                 self.analyzed_db.insertIntoTable(
                     aTable, self.db.selectFromTable(aTable))
 
+        # save merged hadron pid to database
+        mergedHaron_pidString = " or ".join(map(lambda (x): 'name = \'%s\' '%x, 
+                                                self.mergedHaron_pid_dict.keys()))
+        self.analyzed_db.executeSQLquery('delete from pid_lookup where %s'%mergedHaron_pidString)
+        self.analyzed_db.insertIntoTable("pid_lookup", list(self.mergedHaron_pid_dict.items()))
     ###########################################################################
     # functions to get number of events
     ########################################################################### 
@@ -385,6 +411,13 @@ class ParticleReader(object):
             self.collect_particle_yield_vs_rap(aParticle, rap_type='rapidity')
             self.collect_particle_yield_vs_rap(aParticle,
                                                rap_type='pseudorapidity')
+
+    def collect_flow_Qn_vectors_for_mergedHaron(self):
+        """
+            collect Qn vectors into database for hadron + anti-hadron
+        """
+        for particle_a, particle_b in self.mergedHaron_name_dict:
+            self.collect_flow_Qn_vectors_forTwo(particle_a, particle_b)
 
     ###########################################################################
     # functions to collect particle emission function
@@ -801,6 +834,124 @@ class ParticleReader(object):
                             )
         self.analyzed_db._dbCon.commit()  # commit changes
 
+
+    def collect_flow_Qn_vectors_forTwo(self, particle_name_a, particle_name_b):
+        """
+            collect nth order flow Qn vector and sub-event QnA, QnB, QnC, QnD
+            vectors for all the events of two hadrons. n is from 1 to 6
+            Qn := 1/Nparticle * sum_i exp[i*n*phi_i]
+            Qn is taken particles havging -0.5 <= rap <= 0.5
+            QnA is taken particles having -1.5 <= rap < -0.5
+            QnB is taken particles having 0.5 < rap <= 1.5
+            QnC is taken particles having -2.5 <= rap < -1.5
+            QnD is taken particles having 1.5 < rap <= 2.5
+            (rapidity is used for identified particles 
+             and pseudorapidity is used for all charged particles)
+        """
+        # get pid string
+        particle_name = self.mergedHaron_name_dict[(particle_name_a, particle_name_b)]
+        pid = self.pid_lookup[particle_name]
+        pid_string = self.getPidString([particle_name_a, particle_name_b])
+        rap_type = 'rapidity'
+
+        weight_type = '1'
+        analyzed_table_name = 'flow_Qn_vectors'
+        analyzed_table_pTdiff_name = 'flow_Qn_vectors_pTdiff'
+
+        # check whether the data are already collected
+        collected_flag = True
+        if self.analyzed_db.createTableIfNotExists(
+                analyzed_table_name,
+                (('hydro_event_id', 'integer'), ('urqmd_event_id', 'integer'),
+                 ('pid', 'integer'), ('weight_type', 'text'), ('n', 'integer'),
+                 ('Nparticle', 'integer'), ('Qn_real', 'real'),
+                 ('Qn_imag', 'real'), ('Nparticle_sub', 'integer'),
+                 ('QnA_real', 'real'), ('QnA_imag', 'real'),
+                 ('QnB_real', 'real'), ('QnB_imag', 'real'),
+                 ('QnC_real', 'real'), ('QnC_imag', 'real'),
+                 ('QnD_real', 'real'), ('QnD_imag', 'real'))
+        ):
+            collected_flag = False
+        else:
+            try_data = array(self.analyzed_db.executeSQLquery(
+                "select Qn_real from %s where "
+                "hydro_event_id = %d and urqmd_event_id = %d and pid = %d and "
+                "n = 1" % (analyzed_table_name, 1, 1, pid)).fetchall())
+            if try_data.size == 0: collected_flag = False
+
+        # check whether user wants to update the analyzed data
+        if collected_flag:
+            print("flow Qn vectors for %s has already been collected!"
+                  % particle_name)
+            inputval = raw_input(
+                "Do you want to delete the existing one and collect again?")
+            if inputval.lower() == 'y' or inputval.lower() == 'yes':
+                self.analyzed_db.executeSQLquery("delete from %s "
+                                                 "where pid = %d" % (
+                                                     analyzed_table_name, pid))
+                self.analyzed_db._dbCon.commit()  # commit changes
+                collected_flag = False
+
+        # check whether the pT differential data are already collected
+        collected_pTdiff_flag = True
+        if self.analyzed_db.createTableIfNotExists(
+                analyzed_table_pTdiff_name,
+                (('hydro_event_id', 'integer'), ('urqmd_event_id', 'integer'),
+                 ('pid', 'integer'), ('weight_type', 'text'), ('n', 'integer'),
+                 ('pT', 'real'), ('Nparticle', 'integer'), ('Qn_real', 'real'),
+                 ('Qn_imag', 'real'), ('Nparticle_sub', 'integer'),
+                 ('QnA_real', 'real'), ('QnA_imag', 'real'),
+                 ('QnB_real', 'real'), ('QnB_imag', 'real'),
+                 ('QnC_real', 'real'), ('QnC_imag', 'real'),
+                 ('QnD_real', 'real'), ('QnD_imag', 'real'))
+        ):
+            collected_pTdiff_flag = False
+        else:
+            try_data = array(self.analyzed_db.executeSQLquery(
+                "select Qn_real from %s where "
+                "hydro_event_id = %d and urqmd_event_id = %d and pid = %d and "
+                "n = 1" % (analyzed_table_pTdiff_name, 1, 1, pid)).fetchall())
+            if try_data.size == 0: collected_pTdiff_flag = False
+
+        # check whether user wants to update the analyzed data
+        if collected_pTdiff_flag:
+            print("pT differential flow Qn vectors for %s has already been "
+                  "collected!" % particle_name)
+            inputval = raw_input(
+                "Do you want to delete the existing one and collect again?")
+            if inputval.lower() == 'y' or inputval.lower() == 'yes':
+                self.analyzed_db.executeSQLquery(
+                    "delete from %s where pid = %d"
+                    % (analyzed_table_pTdiff_name, pid))
+                self.analyzed_db._dbCon.commit()  # commit changes
+                collected_pTdiff_flag = False
+
+        # collect data loop over all the events
+        if not collected_flag or not collected_pTdiff_flag:
+            print("collect flow Qn vectors for %s ..." % particle_name)
+            for hydroId in range(1, self.hydroNev + 1):
+                urqmd_nev = self.db.executeSQLquery(
+                    "select Number_of_UrQMDevents from UrQMD_NevList where "
+                    "hydroEventId = %d " % hydroId).fetchall()[0][0]
+                for urqmdId in range(1, urqmd_nev + 1):
+                    Qn_data, Qn_pTdata = self.get_Qn_vector(
+                        hydroId, urqmdId, pid_string, weight_type, rap_type)
+                    if not collected_flag:
+                        for item in range(len(Qn_data[:, 0])):
+                            self.analyzed_db.insertIntoTable(
+                                analyzed_table_name, ((hydroId, urqmdId, pid,
+                                                       weight_type) + tuple(
+                                    Qn_data[item, :]))
+                            )
+                    if not collected_pTdiff_flag:
+                        for item in range(len(Qn_pTdata[:, 0])):
+                            self.analyzed_db.insertIntoTable(
+                                analyzed_table_pTdiff_name,
+                                ((hydroId, urqmdId, pid, weight_type)
+                                 + tuple(Qn_pTdata[item, :]))
+                            )
+        self.analyzed_db._dbCon.commit()  # commit changes
+
     def collect_particle_meanPT(self, particle_name):
         """
             collect particle mean pT without pT cut and rapidity=(-0.5, 0.5)
@@ -870,12 +1021,13 @@ class ParticleReader(object):
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
-        self.collect_charged_particle_spectra()
-        self.collect_charged_particle_yield()
+        self.collect_basic_particle_spectra()
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
             self.collect_particle_meanPT(aPart)
+
+        self.collect_flow_Qn_vectors_for_mergedHaron()
 
     def mergeAnalyzedDatabases(self, toDB, fromDB):
         """
