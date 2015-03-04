@@ -518,7 +518,7 @@ class ParticleReader(object):
             QnD is taken particles having 1.5 < rap <= 2.5
             Nparticle_sub = min(len(QnA), len(QnB), len(QnC), len(QnD))
         """
-        rap_gap1 = (0.5, 1.0, 1.5) # for Qn
+        rap_gap1 = (0.1, 0.3, 0.5) # for Qn
         rap_gap2 = rap_gap1 # for QnA, QnB, ...
         eps = 1e-15
         norder = 6
