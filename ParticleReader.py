@@ -877,8 +877,6 @@ class ParticleReader(object):
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
-        self.collect_charged_particle_spectra()
-        self.collect_charged_particle_yield()
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
