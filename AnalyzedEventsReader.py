@@ -1945,6 +1945,22 @@ if __name__ == "__main__":
     if len(argv) < 2:
         printHelpMessageandQuit()
     test = AnalyzedDataReader(str(argv[1]))
+    # extract results
+    v2_ch_array = test.get_intevn_flow('charged', 'scalar_product', 2,
+                                    pT_range=(0.2, 3.0))
+    v3_ch_array = test.get_intevn_flow('charged', 'scalar_product', 3,
+                                    pT_range=(0.2, 3.0))
+    v2_ch_mean = sqrt(v2_ch_array[1]**2 + v2_ch_array[3]**2)
+    v2_ch_error= sqrt(v2_ch_array[2]**2 + v2_ch_array[4]**2)
+    v3_ch_mean = sqrt(v3_ch_array[1]**2 + v3_ch_array[3]**2)
+    v3_ch_error= sqrt(v3_ch_array[2]**2 + v3_ch_array[4]**2)    
+    results = append([v2_ch_mean, v2_ch_error], [v3_ch_mean, v3_ch_error])
+    for aParticle in ['pion_p', 'kaon_p', 'proton']:
+        meanPT =  test.get_particle_meanPT(aParticle)
+        results = append(results, meanPT)
+    savetxt('paramSearch_result.dat', results[None], 
+        fmt='%10.8e', delimiter=' ')
+
     # print(test.get_ptinte_two_flow_correlation('pion_p', 'event_plane', 2, -2))
     #print(test.get_ptinte_two_flow_correlation('pion_p', 'scalar_product', 2, -2))
     #print(test.get_ptinte_three_flow_correlation('pion_p', 'event_plane', 
@@ -1973,8 +1989,6 @@ if __name__ == "__main__":
     #    pT_range = linspace(0.0, 2.0, 21)))
     #print(test.get_intevn_2pc_flow('pion_p', 2, pT_range = (0.3, 3.0)))
     #print(test.get_particle_spectra('pion_p', pT_range=linspace(0.1, 2.5, 20), rap_type = 'pseudorapidity'))
-    print test.get_particle_meanPT('pion_p')
-    print(test.get_particle_yield_vs_rap('pion_p', rap_type = 'rapidity', rap_range=linspace(-2.5, 2.5, 30)))
     #print(test.get_particle_yield('pion_p', rap_type = 'rapidity', rap_range=(-0.5, 0.5)))
     #print(test.get_particle_yield_vs_spatial_variable('pion_p', 'tau', 
     #      linspace(0.6, 10, 50), rap_type = 'rapidity'))

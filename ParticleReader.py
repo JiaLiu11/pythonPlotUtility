@@ -1018,16 +1018,20 @@ class ParticleReader(object):
     ########################################################################### 
 
     def generateAnalyzedDatabase(self):
+        self.collect_particle_spectra("charged", rap_type='rapidity')
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
+                                           rap_type='rapidity')
+        self.collect_particle_yield_vs_rap("charged",
                                            rap_type='pseudorapidity')
+
         self.collect_basic_particle_spectra()
         self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
             self.collect_particle_meanPT(aPart)
 
-        self.collect_flow_Qn_vectors_for_mergedHaron()
+        #self.collect_flow_Qn_vectors_for_mergedHaron()
 
     def mergeAnalyzedDatabases(self, toDB, fromDB):
         """
