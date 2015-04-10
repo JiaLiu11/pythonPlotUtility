@@ -541,14 +541,14 @@ class ParticleReader(object):
             Qn_pTdata = (n, pT, Nparticle, Qn_real, Qn_imag, Nparticle_sub, 
                          QnA_real, QnA_imag, QnB_real, QnB_imag, 
                          QnC_real, QnC_imag, QnD_real, QnD_imag)
-            Qn is taken particles havging -0.5 <= rap <= 0.5
-            QnA is taken particles having -1.5 <= rap < -0.5
-            QnB is taken particles having 0.5 < rap <= 1.5
-            QnC is taken particles having -2.5 <= rap < -1.5
-            QnD is taken particles having 1.5 < rap <= 2.5
+            Qn is taken particles havging -0.3 <= rap <= 0.3
+            QnA is taken particles having -0.6 <= rap < -0.3
+            QnB is taken particles having  0.3 <  rap <= 0.6
+            QnC is taken particles having -1.0 <= rap < -0.6
+            QnD is taken particles having  0.6 <  rap <= 1.0
             Nparticle_sub = min(len(QnA), len(QnB), len(QnC), len(QnD))
         """
-        rap_gap = (0.5, 1.5, 2.5)
+        rap_gap = (0.3, 0.6, 1.0)
         eps = 1e-15
         norder = 6
         npT = 30
@@ -593,23 +593,23 @@ class ParticleReader(object):
         idxD_pT = [[] for _ in range(npT)]
         for ipart in range(len(pT)):
             pTpos = int((pT[ipart] - pT_boundaries[0]) / dpT)
-            # Qn is taken particles havging -0.5 <= rap <= 0.5
+            # Qn is taken particles havging -0.3 <= rap <= 0.3
             if rap[ipart] <= rap_gap[0] and rap[ipart] >= - rap_gap[0]:
                 idx.append(ipart)
                 if pTpos < npT: idx_pT[pTpos].append(ipart)
-            # QnA is taken particles having -1.5 <= rap < -0.5
+            # QnA is taken particles having -0.6 <= rap < -0.3
             elif rap[ipart] < - rap_gap[0] and rap[ipart] >= - rap_gap[1]:
                 idxA.append(ipart)
                 if pTpos < npT: idxA_pT[pTpos].append(ipart)
-            # QnB is taken particles having 0.5 < rap <= 1.5
+            # QnB is taken particles having 0.3 < rap <= 0.6
             elif rap[ipart] <= rap_gap[1] and rap[ipart] > rap_gap[0]:
                 idxB.append(ipart)
                 if pTpos < npT: idxB_pT[pTpos].append(ipart)
-            # QnC is taken particles having -2.5 <= rap < -1.5
+            # QnC is taken particles having -1.0 <= rap < -0.6
             elif rap[ipart] < - rap_gap[1] and rap[ipart] >= - rap_gap[2]:
                 idxC.append(ipart)
                 if pTpos < npT: idxC_pT[pTpos].append(ipart)
-            # QnD is taken particles having 1.5 < rap <= 2.5
+            # QnD is taken particles having 0.6 < rap <= 1.0
             elif rap[ipart] <= rap_gap[2] and rap[ipart] > rap_gap[1]:
                 idxD.append(ipart)
                 if pTpos < npT: idxD_pT[pTpos].append(ipart)
@@ -720,11 +720,11 @@ class ParticleReader(object):
             collect nth order flow Qn vector and sub-event QnA, QnB, QnC, QnD
             vectors for all the events. n is from 1 to 6
             Qn := 1/Nparticle * sum_i exp[i*n*phi_i]
-            Qn is taken particles havging -0.5 <= rap <= 0.5
-            QnA is taken particles having -1.5 <= rap < -0.5
-            QnB is taken particles having 0.5 < rap <= 1.5
-            QnC is taken particles having -2.5 <= rap < -1.5
-            QnD is taken particles having 1.5 < rap <= 2.5
+            Qn is taken particles havging -0.3 <= rap <= 0.3
+            QnA is taken particles having -0.6 <= rap < -0.3
+            QnB is taken particles having  0.3 <  rap <= 0.6
+            QnC is taken particles having -1.0 <= rap < -0.6
+            QnD is taken particles having  0.6 <  rap <= 1.0
             (rapidity is used for identified particles 
              and pseudorapidity is used for all charged particles)
         """
