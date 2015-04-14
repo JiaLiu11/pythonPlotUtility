@@ -48,7 +48,7 @@ for inode in range(num_of_split):
     rename(db_source_file, db_source_file_renamed)
     EbeCollector().collectParticleinfo(from_folder, subfolder_pattern, 
                                        databaseFilename = db_name_now,
-                                       rap_range = (-2.5, 2.5),
+                                       rap_range = (-1.5, 1.5),
                                        particles_to_collect = ['allUrqmd'])
     # reverse the name of source file
     rename(db_source_file_renamed, db_source_file)

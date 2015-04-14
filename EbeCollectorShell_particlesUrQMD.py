@@ -28,5 +28,5 @@ else:
 from EbeCollector import EbeCollector
 EbeCollector().collectParticleinfo(from_folder, subfolder_pattern, 
                                    databaseFilename = database_filename,
-                                   rap_range = (-2.5, 2.5),
+                                   rap_range = (-1.5, 1.5),
                                    particles_to_collect = ['allUrqmd'])
