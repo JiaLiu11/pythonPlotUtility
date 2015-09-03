@@ -1031,6 +1031,8 @@ class ParticleReader(object):
             self.collect_flow_Qn_vectors(aPart)
             self.collect_particle_meanPT(aPart)
 
+        for aPart in ['lambda', 'xi_m', 'omega']:
+            self.collect_particle_spectra(aPart, rap_type='rapidity')
         self.collect_flow_Qn_vectors_for_mergedHaron()
 
     def mergeAnalyzedDatabases(self, toDB, fromDB):
