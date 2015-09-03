@@ -1945,21 +1945,20 @@ if __name__ == "__main__":
     if len(argv) < 2:
         printHelpMessageandQuit()
     test = AnalyzedDataReader(str(argv[1]))
-    # extract results
-    v2_ch_array = test.get_intevn_flow('charged', 'scalar_product', 2,
-                                    pT_range=(0.2, 3.0))
-    v3_ch_array = test.get_intevn_flow('charged', 'scalar_product', 3,
-                                    pT_range=(0.2, 3.0))
-    v2_ch_mean = sqrt(v2_ch_array[1]**2 + v2_ch_array[3]**2)
-    v2_ch_error= sqrt(v2_ch_array[2]**2 + v2_ch_array[4]**2)
-    v3_ch_mean = sqrt(v3_ch_array[1]**2 + v3_ch_array[3]**2)
-    v3_ch_error= sqrt(v3_ch_array[2]**2 + v3_ch_array[4]**2)    
-    results = append([v2_ch_mean, v2_ch_error], [v3_ch_mean, v3_ch_error])
-    for aParticle in ['pion_p', 'kaon_p', 'proton']:
-        meanPT =  test.get_particle_meanPT(aParticle)
-        results = append(results, meanPT)
-    savetxt('paramSearch_result.dat', results[None], 
-        fmt='%10.8e', delimiter=' ')
+    # check hadron yield for boost-invariant assumption
+    charged_yield = test.get_particle_yield_vs_rap('charged', rap_type='rapidity',
+                                  rap_range=linspace(-1.5, 1.5, 31))
+    savetxt('charged_yield.dat', charged_yield, fmt='%10.8e', delimiter=' ')
+    # check spectra
+    for aParticle in ['pion_p', 'kaon_p', 'proton', 'lambda', 'xi_m', 'omega']:
+        spectra_data = test.get_particle_spectra(aParticle, 
+            pT_range=linspace(0.1, 2.5, 26), rap_type = 'rapidity')
+        savetxt('%s_spectra.dat'%aParticle, spectra_data, fmt='%10.8e', delimiter=' ')
+    # check spectra
+    for aParticle in ['pion_total', 'kaon_total', 'proton_total', 'lambda_total', 'xi_m_total', 'omega_total']:
+        flow_data = test.get_diffvn_flow(aParticle, 'scalar_product', 2, 
+            pT_range=linspace(0.0, 2.0, 21))
+        savetxt('%s_v2data.dat'%aParticle, flow_data, fmt='%10.8e', delimiter=' ')
 
     # print(test.get_ptinte_two_flow_correlation('pion_p', 'event_plane', 2, -2))
     #print(test.get_ptinte_two_flow_correlation('pion_p', 'scalar_product', 2, -2))
