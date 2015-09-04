@@ -1026,7 +1026,7 @@ class ParticleReader(object):
                                            rap_type='pseudorapidity')
 
         self.collect_basic_particle_spectra()
-        # self.collect_flow_Qn_vectors('charged')
+        self.collect_flow_Qn_vectors('charged')
         for aPart in ['pion_p', 'kaon_p', 'proton']:
             self.collect_flow_Qn_vectors(aPart)
             self.collect_particle_meanPT(aPart)
