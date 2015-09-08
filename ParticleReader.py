@@ -566,8 +566,8 @@ class ParticleReader(object):
         print("processing event: (%d, %d) " % (hydro_id, urqmd_id))
         particleList = array(self.db.executeSQLquery(
             "select pT, phi_p, %s from particle_list where "
-            "hydroEvent_id = %d and UrQMDEvent_id = %d and (%s)"
-            % (rap_type, hydro_id, urqmd_id, pid_string)).fetchall())
+            "hydroEvent_id = %d and (%s)"
+            % (rap_type, hydro_id, pid_string)).fetchall())
 
         # no particle in the event
         if particleList.size == 0: return (Qn_data, Qn_pTdata)
@@ -811,27 +811,24 @@ class ParticleReader(object):
         # collect data loop over all the events
         if not collected_flag or not collected_pTdiff_flag:
             print("collect flow Qn vectors for %s ..." % particle_name)
+            urqmdId = 1
             for hydroId in range(1, self.hydroNev + 1):
-                urqmd_nev = self.db.executeSQLquery(
-                    "select Number_of_UrQMDevents from UrQMD_NevList where "
-                    "hydroEventId = %d " % hydroId).fetchall()[0][0]
-                for urqmdId in range(1, urqmd_nev + 1):
-                    Qn_data, Qn_pTdata = self.get_Qn_vector(
-                        hydroId, urqmdId, pid_string, weight_type, rap_type)
-                    if not collected_flag:
-                        for item in range(len(Qn_data[:, 0])):
-                            self.analyzed_db.insertIntoTable(
-                                analyzed_table_name, ((hydroId, urqmdId, pid,
-                                                       weight_type) + tuple(
-                                    Qn_data[item, :]))
-                            )
-                    if not collected_pTdiff_flag:
-                        for item in range(len(Qn_pTdata[:, 0])):
-                            self.analyzed_db.insertIntoTable(
-                                analyzed_table_pTdiff_name,
-                                ((hydroId, urqmdId, pid, weight_type)
-                                 + tuple(Qn_pTdata[item, :]))
-                            )
+                Qn_data, Qn_pTdata = self.get_Qn_vector(
+                    hydroId, urqmdId, pid_string, weight_type, rap_type)
+                if not collected_flag:
+                    for item in range(len(Qn_data[:, 0])):
+                        self.analyzed_db.insertIntoTable(
+                            analyzed_table_name, ((hydroId, urqmdId, pid,
+                                                   weight_type) + tuple(
+                                Qn_data[item, :]))
+                        )
+                if not collected_pTdiff_flag:
+                    for item in range(len(Qn_pTdata[:, 0])):
+                        self.analyzed_db.insertIntoTable(
+                            analyzed_table_pTdiff_name,
+                            ((hydroId, urqmdId, pid, weight_type)
+                             + tuple(Qn_pTdata[item, :]))
+                        )
         self.analyzed_db._dbCon.commit()  # commit changes
 
 
@@ -929,27 +926,24 @@ class ParticleReader(object):
         # collect data loop over all the events
         if not collected_flag or not collected_pTdiff_flag:
             print("collect flow Qn vectors for %s ..." % particle_name)
+            urqmdId = 1
             for hydroId in range(1, self.hydroNev + 1):
-                urqmd_nev = self.db.executeSQLquery(
-                    "select Number_of_UrQMDevents from UrQMD_NevList where "
-                    "hydroEventId = %d " % hydroId).fetchall()[0][0]
-                for urqmdId in range(1, urqmd_nev + 1):
-                    Qn_data, Qn_pTdata = self.get_Qn_vector(
-                        hydroId, urqmdId, pid_string, weight_type, rap_type)
-                    if not collected_flag:
-                        for item in range(len(Qn_data[:, 0])):
-                            self.analyzed_db.insertIntoTable(
-                                analyzed_table_name, ((hydroId, urqmdId, pid,
-                                                       weight_type) + tuple(
-                                    Qn_data[item, :]))
-                            )
-                    if not collected_pTdiff_flag:
-                        for item in range(len(Qn_pTdata[:, 0])):
-                            self.analyzed_db.insertIntoTable(
-                                analyzed_table_pTdiff_name,
-                                ((hydroId, urqmdId, pid, weight_type)
-                                 + tuple(Qn_pTdata[item, :]))
-                            )
+                Qn_data, Qn_pTdata = self.get_Qn_vector(
+                    hydroId, urqmdId, pid_string, weight_type, rap_type)
+                if not collected_flag:
+                    for item in range(len(Qn_data[:, 0])):
+                        self.analyzed_db.insertIntoTable(
+                            analyzed_table_name, ((hydroId, urqmdId, pid,
+                                                   weight_type) + tuple(
+                                Qn_data[item, :]))
+                        )
+                if not collected_pTdiff_flag:
+                    for item in range(len(Qn_pTdata[:, 0])):
+                        self.analyzed_db.insertIntoTable(
+                            analyzed_table_pTdiff_name,
+                            ((hydroId, urqmdId, pid, weight_type)
+                             + tuple(Qn_pTdata[item, :]))
+                        )
         self.analyzed_db._dbCon.commit()  # commit changes
 
     def collect_particle_meanPT(self, particle_name):
