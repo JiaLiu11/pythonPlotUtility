@@ -536,63 +536,70 @@ class ParticleReader(object):
         #                 eta, pT, phi_p, rapidity, pseudorapidity        
         source_data = array(self.db.executeSQLquery(
             "select * from particle_list "
-            "where pid=%d"%source_pid).fetchone())
+            "where pid=%d and hydroEvent_id=1"%source_pid).fetchone())
         if source_data.size == 0:
             print "particle_decay: no source particle!"
             return
-        source_data_cursor = self.db.executeSQLquery(
-            "select * from particle_list "
-            "where pid=%d"%source_pid)
+
         # backup up source and target particles
         self.db.createTableIfNotExists("particle_list_backup", 
                (("hydroEvent_id","integer"), ("UrQMDEvent_id","interger"), ("pid","integer"), 
                 ("tau","real"), ("x","real"), ("y","real"), ("eta","real"), 
                 ("pT", "real"), ("phi_p", "real"), ("rapidity", "real"), ("pseudorapidity", "real")) )
-        for iPid in [source_pid, product1_pid, product2_pid]:
-            product_data_cursor = self.db.executeSQLquery(
-                                        "select * from particle_list "
-                                        "where pid=%d"%iPid)
-            while True:
-                product_data_tobackup = array(product_data_cursor.fetchmany(5000))
-                if product_data_tobackup.size == 0:
-                    break
-                try:
-                    self.db.insertIntoTable("particle_list_backup", list(product_data_tobackup))
-                except:
-                    print "particle_decay: backup particle pid=%d data failed"%iPid
-                    exit(-1)
+        for hydroId in range(1, self.hydroNev + 1):
+            print "processing hydro event %d:"%hydroId
+            print "backup tables..."
+            for iPid in [source_pid, product1_pid, product2_pid]:
+                backup_data_cursor = self.db.executeSQLquery(
+                                            "select * from particle_list "
+                                            "where pid=%d and hydroEvent_id=%d"%(iPid, hydroId))
+                while True:
+                    product_data_tobackup = array(backup_data_cursor.fetchmany(5000))
+                    if product_data_tobackup.size == 0:
+                        break
+                    try:
+                        self.db.insertIntoTable("particle_list_backup", list(product_data_tobackup))
+                    except:
+                        print "particle_decay: backup particle pid=%d data failed"%iPid
+                        exit(-1)
 
-        # decay
-        while True:
-            source_data = array(source_data_cursor.fetchmany(5000))
-            if source_data.size == 0:
-                break
-            # extract momentum
-            source_momentum_data = source_data[:, 7:]
-            source_4momentum_data = self.to4momentum_format_converter(
-                source_mass, source_momentum_data)
-            product1_4momentum, product2_4momentum = self.twoBodayDecayMany(
-                source_4momentum_data, source_mass, product1_mass, product2_mass)
-            try:
-                # backup particle source
-                # save product particle 1
-                product1_momentum_dbFormat =  self.toDBmomentum_format_converter(product1_4momentum)
-                product_1_data = source_data.copy()
-                product_1_data[:, 2] = product1_pid
-                product_1_data[:, 7:]= product1_momentum_dbFormat
-                self.db.insertIntoTable("particle_list", list(product_1_data))
-                # save product particle 2
-                product2_momentum_dbFormat =  self.toDBmomentum_format_converter(product2_4momentum)
-                product_2_data = source_data.copy()
-                product_2_data[:, 2] = product2_pid
-                product_2_data[:, 7:]= product2_momentum_dbFormat
-                self.db.insertIntoTable("particle_list", list(product_2_data))
-            except:
-                print "particle_decay: save data failed!"
-                exit(-1)
-        # delete particle source
-        self.db.executeSQLquery("delete from particle_list "
-                                 "where pid = %d" %source_pid)
+            # decay
+            print "excute decay..."
+            source_data_cursor = self.db.executeSQLquery(
+                    "select * from particle_list "
+                    "where pid=%d and hydroEvent_id=%d"%(source_pid, hydroId))
+            while True:
+                source_data = array(source_data_cursor.fetchmany(5000))
+                if source_data.size == 0:
+                    break
+                # extract momentum
+                source_momentum_data = source_data[:, 7:]
+                source_4momentum_data = self.to4momentum_format_converter(
+                    source_mass, source_momentum_data)
+                product1_4momentum, product2_4momentum = self.twoBodayDecayMany(
+                    source_4momentum_data, source_mass, product1_mass, product2_mass)
+                try:
+                    # backup particle source
+                    # save product particle 1
+                    product1_momentum_dbFormat =  self.toDBmomentum_format_converter(product1_4momentum)
+                    product_1_data = source_data.copy()
+                    product_1_data[:, 2] = product1_pid
+                    product_1_data[:, 7:]= product1_momentum_dbFormat
+                    self.db.insertIntoTable("particle_list", list(product_1_data))
+                    # save product particle 2
+                    product2_momentum_dbFormat =  self.toDBmomentum_format_converter(product2_4momentum)
+                    product_2_data = source_data.copy()
+                    product_2_data[:, 2] = product2_pid
+                    product_2_data[:, 7:]= product2_momentum_dbFormat
+                    self.db.insertIntoTable("particle_list", list(product_2_data))
+                except:
+                    print "particle_decay: saving data failed!"
+                    exit(-1)
+            # delete particle source
+            self.db.executeSQLquery("delete from particle_list "
+                                     "where pid = %d and hydroEvent_id=%d" %(source_pid, hydroId))
+            print "hydro event %d/%d finished!"%(hydroId, self.hydroNev)
+            self.db._dbCon.commit()
         self.db.closeConnection()
         print "Decay finished!"
 
