@@ -390,6 +390,214 @@ class ParticleReader(object):
                         )
         self.analyzed_db._dbCon.commit()  # commit changes
 
+
+##################################################################
+    def twoBodyDecay(self, pa, ma, mb, mc=0):
+        """
+            two body decay: a-->b+c(gamma)
+            input: 4-momentum of particle a: pa
+            output: two numpy arrays: pb and pc in the lab frame
+            return: numpy list contains pb list and pc list
+        """
+        # in the local rest frame
+        p0b = (ma**2. + mb**2. - mc**2) / (2.0*ma)
+        p0c = (ma**2. - mb**2. + mc**2) / (2.0*ma)
+        pb_lab, pc_lab = zeros((4)),zeros((4))
+        if p0c<0:
+            print "Particle c with negative p_0:"
+            print "p0c = %f"%p0c
+            return pb_lab, pc_lab
+        # isotropic decay
+        theta= arccos(random.uniform(-1, 1))
+        phi  = random.uniform(0, 2*pi)
+        p_abs = sqrt(p0b**2.-mb**2.)
+        pb = array([p0b, p_abs*sin(theta)*cos(phi), p_abs*sin(theta)*sin(phi), 
+                        p_abs*cos(theta)])
+        pc = array([p0c, -p_abs*sin(theta)*cos(phi), -p_abs*sin(theta)*sin(phi), 
+                        -p_abs*cos(theta)])
+        # boost to the lab frame
+        beta = pa[1:]/pa[0]
+        gamma= 1./sqrt(1-dot(beta, beta))
+        pb_lab[0] = gamma*(dot(beta,pb[1:])+pb[0])
+        pb_lab[1:]= pb[1:]+gamma*beta*(gamma/(gamma+1.)*dot(beta,pb[1:])+p0b)
+        pc_lab[0] = gamma*(dot(beta,pc[1:])+pc[0])
+        pc_lab[1:]= pc[1:]+gamma*beta*(gamma/(gamma+1.)*dot(beta,pc[1:])+p0b)
+        return pb_lab, pc_lab
+
+
+    def twoBodayDecayMany(self, pa_matrix, ma, mb, mc=0):
+        """
+            vectorized two body decay for process:
+                a-->b+gamma
+            input: pa_matrix: n*4 matrix, one line for a particle
+                   mb: mass of outgoing particle b
+            output: numpy arrays pb_lab_matrix, pc_lab_matrix
+        """
+        if pa_matrix.ndim==1:
+            return twoBodyDecay(pa_matrix, mb)
+        # in local rest frame
+        p0b = (ma**2. + mb**2. - mc**2) / (2.0*ma)
+        p0c = (ma**2. - mb**2. + mc**2) / (2.0*ma)
+        theta_array = arccos(random.uniform(-1, 1, size=pa_matrix.shape[0]))
+        phi_array  =  random.uniform(0, 2*pi, size=pa_matrix.shape[0])     
+        # find pb and pc for all particles
+        pb_matrix, pc_matrix = zeros(pa_matrix.shape), zeros(pa_matrix.shape)
+        p_abs = sqrt(p0b**2.-mb**2.)
+        pb_matrix[:,0] = p0b
+        pb_matrix[:,1] = p_abs*sin(theta_array)*cos(phi_array)
+        pb_matrix[:,2] = p_abs*sin(theta_array)*sin(phi_array)
+        pb_matrix[:,3] = p_abs*cos(theta_array)
+        pc_matrix[:,0] = p0c
+        pc_matrix[:,1] = -p_abs*sin(theta_array)*cos(phi_array)
+        pc_matrix[:,2] = -p_abs*sin(theta_array)*sin(phi_array)
+        pc_matrix[:,3] = -p_abs*cos(theta_array)
+        # boost to the lab frame
+        pb_lab_matrix, pc_lab_matrix = zeros(pa_matrix.shape), zeros(pa_matrix.shape)
+        beta_matrix = pa_matrix[:,1:]/transpose(tile(pa_matrix[:,0],(3,1)))
+        gamma_array = 1./sqrt(1.-sum(beta_matrix**2., axis=1))
+        gamma_matrix = tile(gamma_array,(3,1)).transpose()
+        gamma_factor = tile(gamma_array/(1.+gamma_array), (3,1)).transpose()
+        beta_dot_pb = tile(diag(dot(beta_matrix, transpose(pb_matrix[:,1:]))),(3,1)).transpose()
+        pb_lab_matrix[:,0]=gamma_array*(beta_dot_pb+p0b)[:,0]
+        pb_lab_matrix[:,1:]=(pb_matrix[:,1:]+
+            gamma_matrix*beta_matrix*(gamma_factor*beta_dot_pb+p0b))
+        beta_dot_pc = tile(diag(dot(beta_matrix, transpose(pc_matrix[:,1:]))),(3,1)).transpose()  
+        pc_lab_matrix[:,0]=gamma_array*(beta_dot_pc+p0c)[:,0]
+        pc_lab_matrix[:,1:]=(pc_matrix[:,1:]
+                        +gamma_matrix*beta_matrix*(gamma_factor*beta_dot_pc+p0c))
+        # tempb = sqrt(pb_lab_matrix[:,0]**2-sum(pb_lab_matrix[:,1:]**2,axis=1)+1e-10)
+        # tempc = sqrt(pc_lab_matrix[:,0]**2-sum(pc_lab_matrix[:,1:]**2,axis=1)+1e-10)
+        # violation_b = where(abs(tempb-mb)>1e-5)
+        # violation_c = where(abs(tempc-mc)>1e-5)
+        # print "sanity check:"
+        # print "pb violations: %d/%d"%(len(violation_b[0]), pb_lab_matrix.shape[0])
+        # print violation_b
+        # print tempb[violation_b[0]]
+        # print "pc violations: %d/%d"%(len(violation_c[0]), pc_lab_matrix.shape[0])
+        # print violation_c
+        # print pb_lab_matrix[violation_b[0],:]
+        # print pc_lab_matrix[violation_c[0],:]
+        # if len(violation_b[0])>0 or len(violation_c[0])>0:
+        #     exit(-1)
+        return pb_lab_matrix, pc_lab_matrix
+
+    def to4momentum_format_converter(self, mass, p_db):
+        ''' convert the momentum table directly extracted from DB to standard 4 momentum table'''
+        result = zeros(p_db.shape) # p0, px, py, pz
+        try:
+            # p_db: pT, phi_p, rapidity, pseudorapidity 
+            mt = sqrt(mass**2.+p_db[:,0]**2)
+            result[:,0] = mt*cosh(p_db[:,2])
+            result[:,1] = p_db[:,0]*cos(p_db[:,1])
+            result[:,2] = p_db[:,0]*sin(p_db[:,1])
+            result[:,3] = mt*sinh(p_db[:,2])
+        except:
+            print "to4momentum_format_converter: conversion failed!"
+        # test
+        temp = sqrt(result[:,0]**2-sum(result[:,1:]**2, axis=1))
+        violation = where(abs(temp-mass)>1e-6)
+        if violation[0].size>0:
+            print "to 4 momentum conversion:"
+            print violation[0].shape
+            print violation[0]
+            print temp[violation[0]]
+            exit(-1)
+        return result
+
+    def toDBmomentum_format_converter(self, p_4form):
+        ''' convert the momentum table from standard 4-momentum form to particle_list form'''
+        result = zeros(p_4form.shape)
+        try:
+            result[:,0] = sqrt(p_4form[:,1]**2.+p_4form[:,2]**2)
+            result[:,1] = arctan2(p_4form[:,2], p_4form[:,1])
+            result[:,2] = 0.5*log((p_4form[:,0]+p_4form[:,3])/(p_4form[:,0]-p_4form[:,3]))
+            p_abs = sqrt(sum(p_4form[:,1:]**2., axis=1))
+            result[:,3] = 0.5*log((p_abs+p_4form[:,3])/(p_abs-p_4form[:,3]))
+        except:
+            print "toDBmomentum_format_converter: conversion failed!"
+        return result            
+
+    def particle_decay(self, source_particle_name, 
+            product_particle_name_1, product_particle_name_2):
+        """
+            Implement partice decay manually, and write the output to database
+        """
+        print "Manually decay: %s ---> %s + %s"%(source_particle_name, 
+            product_particle_name_1, product_particle_name_2)
+        source_pid = self.pid_lookup[source_particle_name]
+        product1_pid = self.pid_lookup[product_particle_name_1]
+        product2_pid = self.pid_lookup[product_particle_name_2]
+        source_mass= self.pid_Mass[source_particle_name]
+        product1_mass= self.pid_Mass[product_particle_name_1]
+        product2_mass= self.pid_Mass[product_particle_name_2]
+
+        # hydroEvent_id, UrQMDEvent_id, pid, tau, x, y
+        #                 eta, pT, phi_p, rapidity, pseudorapidity        
+        source_data = array(self.db.executeSQLquery(
+            "select * from particle_list "
+            "where pid=%d"%source_pid).fetchone())
+        if source_data.size == 0:
+            print "particle_decay: no source particle!"
+            return
+        source_data_cursor = self.db.executeSQLquery(
+            "select * from particle_list "
+            "where pid=%d"%source_pid)
+        # backup up source and target particles
+        self.db.createTableIfNotExists("particle_list_backup", 
+               (("hydroEvent_id","integer"), ("UrQMDEvent_id","interger"), ("pid","integer"), 
+                ("tau","real"), ("x","real"), ("y","real"), ("eta","real"), 
+                ("pT", "real"), ("phi_p", "real"), ("rapidity", "real"), ("pseudorapidity", "real")) )
+        for iPid in [source_pid, product1_pid, product2_pid]:
+            product_data_cursor = self.db.executeSQLquery(
+                                        "select * from particle_list "
+                                        "where pid=%d"%iPid)
+            while True:
+                product_data_tobackup = array(product_data_cursor.fetchmany(5000))
+                if product_data_tobackup.size == 0:
+                    break
+                try:
+                    self.db.insertIntoTable("particle_list_backup", list(product_data_tobackup))
+                except:
+                    print "particle_decay: backup particle pid=%d data failed"%iPid
+                    exit(-1)
+
+        # decay
+        while True:
+            source_data = array(source_data_cursor.fetchmany(5000))
+            if source_data.size == 0:
+                break
+            # extract momentum
+            source_momentum_data = source_data[:, 7:]
+            source_4momentum_data = self.to4momentum_format_converter(
+                source_mass, source_momentum_data)
+            product1_4momentum, product2_4momentum = self.twoBodayDecayMany(
+                source_4momentum_data, source_mass, product1_mass, product2_mass)
+            try:
+                # backup particle source
+                # save product particle 1
+                product1_momentum_dbFormat =  self.toDBmomentum_format_converter(product1_4momentum)
+                product_1_data = source_data.copy()
+                product_1_data[:, 2] = product1_pid
+                product_1_data[:, 7:]= product1_momentum_dbFormat
+                self.db.insertIntoTable("particle_list", list(product_1_data))
+                # save product particle 2
+                product2_momentum_dbFormat =  self.toDBmomentum_format_converter(product2_4momentum)
+                product_2_data = source_data.copy()
+                product_2_data[:, 2] = product2_pid
+                product_2_data[:, 7:]= product2_momentum_dbFormat
+                self.db.insertIntoTable("particle_list", list(product_2_data))
+            except:
+                print "particle_decay: save data failed!"
+                exit(-1)
+        # delete particle source
+        self.db.executeSQLquery("delete from particle_list "
+                                 "where pid = %d" %source_pid)
+        self.db.closeConnection()
+        print "Decay finished!"
+
+##################################################################
+
+
     def collect_basic_particle_yield(self):
         """
             collect particle yield into database for commonly interested 
@@ -1012,6 +1220,7 @@ class ParticleReader(object):
     ########################################################################### 
 
     def generateAnalyzedDatabase(self):
+        self.particle_decay("sigma_0", "lambda", "gamma")
         self.collect_particle_spectra("charged", rap_type='rapidity')
         self.collect_particle_spectra("charged", rap_type='pseudorapidity')
         self.collect_particle_yield_vs_rap("charged",
