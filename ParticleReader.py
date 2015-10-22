@@ -46,7 +46,8 @@ class ParticleReader(object):
 
         # setup lookup tables
         self.pid_lookup = dict(self.db.selectFromTable("pid_lookup"))
-
+        self.pid_Mass = dict(self.db.selectFromTable("pid_Mass"))
+        
         # define all charged hadrons
         self.charged_hadron_list = [
             "pion_p", "pion_m", "kaon_p", "kaon_m", "proton", "anti_proton",
