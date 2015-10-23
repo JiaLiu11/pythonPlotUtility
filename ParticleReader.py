@@ -536,7 +536,7 @@ class ParticleReader(object):
         #                 eta, pT, phi_p, rapidity, pseudorapidity        
         source_data = array(self.db.executeSQLquery(
             "select * from particle_list "
-            "where pid=%d and hydroEvent_id=1"%source_pid).fetchone())
+            "where pid=%d and hydroEvent_id=400"%source_pid).fetchone())
         if source_data.size == 0:
             print "particle_decay: no source particle!"
             return
@@ -562,6 +562,7 @@ class ParticleReader(object):
                     except:
                         print "particle_decay: backup particle pid=%d data failed"%iPid
                         exit(-1)
+                backup_data_cursor.close()
 
             # decay
             print "excute decay..."
@@ -600,6 +601,7 @@ class ParticleReader(object):
                                      "where pid = %d and hydroEvent_id=%d" %(source_pid, hydroId))
             print "hydro event %d/%d finished!"%(hydroId, self.hydroNev)
             self.db._dbCon.commit()
+            source_data_cursor.close()
         self.db.closeConnection()
         print "Decay finished!"
 
