@@ -4,6 +4,7 @@ from sys import argv, exit
 from os import path
 from DBR import SqliteDB
 from numpy import *
+import gc
 
 # define colors
 purple = "\033[95m"
@@ -536,7 +537,7 @@ class ParticleReader(object):
         #                 eta, pT, phi_p, rapidity, pseudorapidity        
         source_data = array(self.db.executeSQLquery(
             "select * from particle_list "
-            "where pid=%d and hydroEvent_id=400"%source_pid).fetchone())
+            "where pid=%d and hydroEvent_id=1"%source_pid).fetchone())
         if source_data.size == 0:
             print "particle_decay: no source particle!"
             return
@@ -602,6 +603,7 @@ class ParticleReader(object):
             print "hydro event %d/%d finished!"%(hydroId, self.hydroNev)
             self.db._dbCon.commit()
             source_data_cursor.close()
+            gc.collect()
         self.db.closeConnection()
         print "Decay finished!"
 
